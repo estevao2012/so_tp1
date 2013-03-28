@@ -5,7 +5,7 @@ compila:
 	gcc main.c -o tp1
  
 executa:
-	./tp1 ls
+	./tp1	
 
 valgrind:
 	@echo "Executando o valgrind"
