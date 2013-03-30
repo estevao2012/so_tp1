@@ -6,7 +6,8 @@
 
 int main(int argc , char* argv[])
 {
-    printf("%s",argv[1]);
+    int i;
+    executaProcesso(argc , argv);
 
     return 0;
 }

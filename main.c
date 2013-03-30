@@ -9,10 +9,12 @@ int main(int argc , char* argv[])
 {
     char* fim = "fim";
     char* vazio = "";
+    char** args;
     char argumentos[512];
     int pp[2];
     int pid;
     int i;
+
 
     //Valida o que for escrito pelo usuario
     printf("Quais são suas ordens?");
@@ -26,11 +28,12 @@ int main(int argc , char* argv[])
         if ( ( pid = fork() ) < 0 ) exit(1);
 
         if (pid == 0){
-            execlp("./proc","./proc", argumentos); //Executa o bash da linha
+            args = parseCommands(argumentos);
+            execvp("./proc", args); //Executa o bash da linha
             _exit(1);
         }else{
             wait();
-            printf("Quais são suas ordens?");
+            printf("Quais são suas ordens? ");
             fgets(argumentos,512, stdin);
             strtok(argumentos,"\n");
         }
