@@ -14,30 +14,28 @@ int main(int argc , char* argv[])
     int pid;
     int i;
 
+    //Valida o que for escrito pelo usuario
     printf("Quais são suas ordens?");
     fgets(argumentos,512 , stdin);
     strtok(argumentos,"\n");
     if(!strcmp(argumentos,fim) ) return 0;
 
-    //while( strcmp(argumentos,fim) || !strcmp(argumentos,vazio)){
+    while( strcmp(argumentos,fim) || !strcmp(argumentos,vazio)){
 
         if ( pipe(pp) < 0 ) exit(1);
         if ( ( pid = fork() ) < 0 ) exit(1);
 
         if (pid == 0){
-           if( !strcmp(argumentos,vazio))execlp("./proc","./proc", argumentos); //Executa o bash da linha
-           _exit(1);
+            execlp("./proc","./proc", argumentos); //Executa o bash da linha
+            _exit(1);
         }else{
-           wait();
-            execlp("./bashso","./bashso", NULL);
-           printf("Quais são suas ordens?");
-           fgets(argumentos,512 , stdin);
+            wait();
+            printf("Quais são suas ordens?");
+            fgets(argumentos,512, stdin);
             strtok(argumentos,"\n");
-           //if(!strcmp(argumentos,fim) ) return 0;
-
         }
 
-    //}
+    }
 
     return 0;
 }
