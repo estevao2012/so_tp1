@@ -17,7 +17,7 @@ int main(int argc , char* argv[])
 
 
     //Valida o que for escrito pelo usuario
-    printf("Quais são suas ordens?");
+    printf("Quais são suas ordens? ");
     fgets(argumentos,512 , stdin);
     strtok(argumentos,"\n");
     if(!strcmp(argumentos,fim) ) return 0;
