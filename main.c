@@ -18,12 +18,22 @@ int main(int argc , char* argv[])
     int argcAll;
     char* argvIn[64];
     char* argvOut[64];
-    FILE* fileOpen;
+    int fileOpen;
 
-    fileOpen = fopen(argv[1],"r");
+    fileOpen = open(argv[1],O_RDONLY);
 
-    //printf("Quais são suas ordens? ");
-    //fgets(argumentos,512 , fileOpen);
+
+    /* Open File For Standard Input */
+
+    if( ( fileOpen ) == NULL ){
+        printf( "Cannot Open File: %s", fileOpen ) ;
+        exit( 1 ) ;
+    }
+
+    if( fileOpen != 0 ){
+        dup2( fileOpen, 0 ); /* Make fp stdin */
+        close( fileOpen ) ; /* Close original fp */
+    }
 
     //Valida o que for escrito pelo usuario
     printf("Quais são suas ordens? ");
