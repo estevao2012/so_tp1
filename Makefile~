@@ -1,9 +1,8 @@
 all: compila executa
 
 compila:
-	gcc -c main.c proc.c
-	gcc main.c -o bashso proc
-	gcc proc.c -o proc
+	gcc -c main.c
+	gcc main.c -o bashso 
  
 executa:
 	./bashso

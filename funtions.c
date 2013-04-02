@@ -10,7 +10,6 @@ void executaProcesso(char *argv[]){
        _exit(1);
     } else {            /* pai */
        wait();
-       exit(1);
     }
 }
 
@@ -21,6 +20,7 @@ void executaProcessoComPipe(char *argvIn[] ,char *argvOut[]){
     if ( pipe(pp) < 0 ) exit(1);
 
     if ( ( pid = fork() ) < 0 ) exit(1);
+
     if (pid == 0) {     /* filho */
        close(pp[0]);    /* fecha saída do pipe (só vai escrever) */
        dup2(pp[1], 1);  /* associa entrada do pipe com saída padrão */
@@ -34,7 +34,7 @@ void executaProcessoComPipe(char *argvIn[] ,char *argvOut[]){
     }
 }
 
-char** parseCommands(char* comando){
+char** parseCommands(char* comando,int *argc){
 
     int i = 0;
     int j,h;
@@ -63,6 +63,7 @@ char** parseCommands(char* comando){
     }
 
     f_words[h] = NULL;
+    *argc = h;
     return f_words;
 
 }

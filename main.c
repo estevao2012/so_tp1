@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include "funtions.c"
 
 
@@ -14,29 +15,45 @@ int main(int argc , char* argv[])
     int pp[2];
     int pid;
     int i;
+    int argcAll;
+    char* argvIn[64];
+    char* argvOut[64];
+    FILE* fileOpen;
 
+    fileOpen = fopen(argv[1],"r");
+
+    //printf("Quais são suas ordens? ");
+    //fgets(argumentos,512 , fileOpen);
 
     //Valida o que for escrito pelo usuario
     printf("Quais são suas ordens? ");
-    fgets(argumentos,512 , stdin);
-    strtok(argumentos,"\n");
-    if(!strcmp(argumentos,fim) ) return 0;
+    while(fgets(argumentos,512 , stdin) != NULL){
 
-    while( strcmp(argumentos,fim) || !strcmp(argumentos,vazio)){
+        strtok(argumentos,"\n");
+        args = parseCommands(argumentos ,&argcAll);
 
-        if ( pipe(pp) < 0 ) exit(1);
-        if ( ( pid = fork() ) < 0 ) exit(1);
+        if(validaPipe(argcAll,args,argvIn,argvOut) == 1){
 
-        if (pid == 0){
-            args = parseCommands(argumentos);
-            execvp("./proc", args); //Executa o bash da linha
-            _exit(1);
-        }else{
-            wait();
-            printf("Quais são suas ordens? ");
-            fgets(argumentos,512, stdin);
-            strtok(argumentos,"\n");
+            if ( ( pid = fork() ) < 0 ) exit(1);
+
+            if (pid == 0) {     /* filho */
+               executaProcessoComPipe(argvIn,argvOut); // Como o processo precisa ser fechado , é necessario abrir um novo processo para ele não finalizar o bash
+            } else {            /* pai */
+               wait();
+            }
         }
+        else
+          executaProcesso(args);
+
+
+        if(strcmp(argumentos,fim) == 0) break;
+        printf("Quais são suas ordens? ");
+        //printf("Quais são suas ordens? ");
+        //fgets(argumentos,512 , stdin);
+        //strtok(argumentos,"\n");
+
+
+
 
     }
 
