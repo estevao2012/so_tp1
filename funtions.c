@@ -117,19 +117,18 @@ void executaProcessoComPipe(char *argvIn[] ,char *argvOut[]){
        dup2(pp[1], 1);  /* associa entrada do pipe com saída padrão */
        close(pp[1]);    /* fecha pp[1], pois se tornou redundante */
 
-     //  verificaLeituraEscrita(argvIn);
-
-
-       execvp(argvIn[0],argvIn); //ls - Escreve | Envia
+        if(verificaLeituraEscrita(argvIn) == 0){
+            execvp(argvIn[0],argvIn); //ls - Escreve | Envia
+        }
        _exit(1);
     } else {            /* pai */
-       close( pp[1] );  /* fecha entrada do pipe (só vai ler) */
-       dup2(pp[0], 0);  /* associa saída do pipe com entrada padrão */
-       close(pp[0]);    /* fecha pp[0], pois se tornou redundante */
-
-       //verificaLeituraEscrita(argvIn);
-
-       execvp(argvOut[0],argvOut); //wc - Le | Recebe
+        close( pp[1] );  /* fecha entrada do pipe (só vai ler) */
+        dup2(pp[0], 0);  /* associa saída do pipe com entrada padrão */
+        close(pp[0]);    /* fecha pp[0], pois se tornou redundante */
+        
+        if(verificaLeituraEscrita(argvOut) == 0){
+            execvp(argvOut[0],argvOut); //wc - Le | Recebe
+        }       
     }
 }
 
