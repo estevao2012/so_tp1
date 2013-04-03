@@ -18,6 +18,8 @@ int main(int argc , char* argv[])
     int opcao;
     char* argvIn[64];
     char* argvOut[64];
+    char* prompt = "Quais são suas ordens ? ";
+
     int fileOpen;
 
     fileOpen = open(argv[1],O_RDONLY);
@@ -34,8 +36,8 @@ int main(int argc , char* argv[])
     }
 
     //Valida o que for escrito pelo usuario
-    printf("Quais são suas ordens? ");
-    while(fgets(argumentos,512 , stdin) != NULL){
+    printf("%s",prompt);
+    while(fgets(argumentos,512,stdin) != NULL){
 
         strtok(argumentos,"\n");
         args = parseCommands(argumentos);
@@ -51,7 +53,7 @@ int main(int argc , char* argv[])
           executaProcesso(args);
 
         if(strcmp(argumentos,fim) == 0) break;
-        printf("Quais são suas ordens? ");
+        printf("%s",prompt);
 
     }
 

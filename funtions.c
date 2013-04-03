@@ -22,30 +22,11 @@ void splitVetor(char *argv[] , int posSplit , char *argvIn[] ,char *argvOut[]){
 
 }
 
-void verificaLeituraEscrita(char *argv[]){
-
+void fazLeitura(char* argvIn[],char* argvOut[]){
 
     int pp[2];
     int pid;
     char argumentos[512];
-    long bufSize;
-    int ler=-1,escrever=-1;
-    int i,argc;
-    char* argvIn[64];
-    char* argvOut[64];
-
-    argc = countWords(argv);
-
-    for(i=0; i < argc ; i++ ){
-        if(strcmp(argv[i], (char*)"<=") == 0) ler = i ;
-        if(strcmp(argv[i], (char*)"=>") == 0) escrever = i;
-    }
-
-    if( ler != -1)
-        splitVetor(argv,ler,argvIn,argvOut);
-    if( escrever != -1)
-        splitVetor(argv,escrever,argvIn,argvOut);
-
 
     FILE* fileOpen;
 
@@ -81,24 +62,51 @@ void verificaLeituraEscrita(char *argv[]){
        wait(NULL);                /* Wait for child */
 
     }
+}
 
+int verificaLeituraEscrita(char *argv[]){
+
+    int ler=-1,escrever=-1;
+    int i,argc;
+    char* argvIn[64];
+    char* argvOut[64];
+
+    argc = countWords(argv);
+
+    for(i=0; i < argc ; i++ ){
+        if(strcmp(argv[i], (char*)"<=") == 0) ler = i ;
+        if(strcmp(argv[i], (char*)"=>") == 0) escrever = i;
+    }
+
+    if( ler != -1){
+        splitVetor(argv,ler,argvIn,argvOut);
+        fazLeitura(argvIn,argvOut);
+        return 1;
+    }
+    if( escrever != -1){
+        splitVetor(argv,escrever,argvIn,argvOut);
+        return 1;
+    }
+
+    return 0;
 
 }
 
 void executaProcesso(char *argv[]){
-    verificaLeituraEscrita(argv);
-//    int pp[2];
-//    int pid;
-//
-//    if ( pipe(pp) < 0 ) exit(1);
-//
-//    if ( ( pid = fork() ) < 0 ) exit(1);
-//    if (pid == 0) {
-//      execvp(argv[0],argv);
-//       _exit(1);
-//    } else {            /* pai */
-//       wait();
-//    }
+
+   int pp[2];
+   int pid;
+
+   if ( pipe(pp) < 0 ) exit(1);
+
+   if ( ( pid = fork() ) < 0 ) exit(1);
+   if (pid == 0) {
+     if(verificaLeituraEscrita(argv) == 0)
+          execvp(argv[0],argv);
+     _exit(1);
+   } else {            /* pai */
+      wait();
+   }
 }
 
 void executaProcessoComPipe(char *argvIn[] ,char *argvOut[]){
