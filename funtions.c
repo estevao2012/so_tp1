@@ -22,67 +22,72 @@ void splitVetor(char *argv[] , int posSplit , char *argvIn[] ,char *argvOut[]){
 
 }
 
-void fazLeitura(char* argvIn[],char* argvOut[]){
+int fazLeitura(char* argvIn[],char* argvOut[]){
 
     int pp[2];
     int pid;
     char argumentos[512];
     int fileOpen;
 
-    fileOpen = open(argvOut[0],O_RDONLY);
-       
-    dup2(fileOpen,0); 
-    
-    close(fileOpen);
-    execvp(argvIn[0],argvIn);
+    if((fileOpen = open(argvOut[0],O_RDONLY)) != -1){
+        dup2(fileOpen,0); 
+        close(fileOpen);
+        execvp(argvIn[0],argvIn);
+        _exit(EXIT_SUCCESS);
+    }else{
+        perror("errno");
+        _exit(1);
+    }
 }
 
-void fazEscrita(char* argvIn[],char* argvOut[]){
+int fazEscrita(char* argvIn[],char* argvOut[]){
 
     int pp[2];
     int pid;
     char argumentos[512];
     int fileOpen;
-    fileOpen = open(argvOut[0],O_WRONLY | O_CREAT , 0644);
-       
-    dup2(fileOpen,1); 
-       
-    close(fileOpen);
-    execvp(argvIn[0],argvIn);
-    _exit(EXIT_SUCCESS);
 
+    if((fileOpen = open(argvOut[0],O_WRONLY | O_CREAT , 0644)) != -1){
+        dup2(fileOpen,1); 
+        close(fileOpen);
+        execvp(argvIn[0],argvIn);
+        _exit(EXIT_SUCCESS);
+    }else{
+        perror("errno");
+        _exit(1);
+    }
+
+}
+
+void localizaRedirecionamentos(char *argv[],int* posLeitura, int* posEscrita){
+    int i,argc;
+    argc = countWords(argv);
+
+    for(i=0; i < argc ; i++ ){
+        if(strcmp(argv[i], (char*)"<=") == 0) *posLeitura = i;
+        if(strcmp(argv[i], (char*)"=>") == 0) *posEscrita = i;
+    }
 }
 
 int verificaLeituraEscrita(char *argv[]){
 
-    int ler=-1,escrever=-1;
-    int i,argc,pos;
+    int ler=-1,escrever=-1; 
     char* argvIn[64];
     char* argvOut[64];
 
-    argc = countWords(argv);
-
-    for(i=0; i < argc ; i++ ){
-        if(strcmp(argv[i], (char*)"<=") == 0) ler = i ;
-        if(strcmp(argv[i], (char*)"=>") == 0) escrever = i;
-    }
-
-    if(ler != -1 ) pos = ler;
-    else pos = escrever;
-
-    splitVetor(argv,pos,argvIn,argvOut);
+    localizaRedirecionamentos(argv,&ler,&escrever); 
 
     if( ler != -1){
+        splitVetor(argv,ler,argvIn,argvOut);
         fazLeitura(argvIn,argvOut);
-        return 1;
     }
+
     if( escrever != -1){
+        splitVetor(argv,escrever,argvIn,argvOut);
         fazEscrita(argvIn,argvOut);
-        return 1;
     }
-
-    return 0;
-
+    if(ler == -1 && escrever == -1)return 0;
+    else return 1;
 }
 
 void executaProcesso(char *argv[]){
@@ -94,11 +99,10 @@ void executaProcesso(char *argv[]){
 
    if ( ( pid = fork() ) < 0 ) exit(1);
    if (pid == 0) {
-        if(verificaLeituraEscrita(argv) == 0){
+        if(verificaLeituraEscrita(argv) == 0)
             execvp(argv[0],argv);
-        }
-
-     _exit(1);
+        
+        _exit(1);
    } else {            /* pai */
       wait();
    }
@@ -113,22 +117,22 @@ void executaProcessoComPipe(char *argvIn[] ,char *argvOut[]){
     if ( ( pid = fork() ) < 0 ) exit(1);
 
     if (pid == 0) {     /* filho */
-       close(pp[0]);    /* fecha saída do pipe (só vai escrever) */
-       dup2(pp[1], 1);  /* associa entrada do pipe com saída padrão */
-       close(pp[1]);    /* fecha pp[1], pois se tornou redundante */
+        close(pp[0]);    /* fecha saída do pipe (só vai escrever) */
+        dup2(pp[1], 1);  /* associa entrada do pipe com saída padrão */
+        close(pp[1]);    /* fecha pp[1], pois se tornou redundante */
 
-        if(verificaLeituraEscrita(argvIn) == 0){
+        if(verificaLeituraEscrita(argvIn) == 0)
             execvp(argvIn[0],argvIn); //ls - Escreve | Envia
-        }
-       _exit(1);
+
+        _exit(1);
     } else {            /* pai */
         close( pp[1] );  /* fecha entrada do pipe (só vai ler) */
         dup2(pp[0], 0);  /* associa saída do pipe com entrada padrão */
         close(pp[0]);    /* fecha pp[0], pois se tornou redundante */
-        
-        if(verificaLeituraEscrita(argvOut) == 0){
+
+        if(verificaLeituraEscrita(argvOut) == 0)
             execvp(argvOut[0],argvOut); //wc - Le | Recebe
-        }       
+
     }
 }
 
@@ -177,8 +181,9 @@ int validaPipe(char* argv[], char** argvIn , char** argvOut){
         if(strcmp(argv[i], (char*)"|") == 0)
             marca_pipe = i;
 
-    if(marca_pipe != -1) splitVetor(argv,marca_pipe,argvIn,argvOut);
-
-    if(marca_pipe != -1) return 1;
+    if(marca_pipe != -1){
+        splitVetor(argv,marca_pipe,argvIn,argvOut);
+        return 1;
+    }
     return 0;
 }
