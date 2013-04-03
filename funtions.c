@@ -25,8 +25,9 @@ void splitVetor(char *argv[] , int posSplit , char *argvIn[] ,char *argvOut[]){
 void verificaLeituraEscrita(char *argv[]){
 
 
-//    int pp[2];
-//    int pid;
+    int pp[2];
+    int pid;
+    char argumentos[512],buf[512];
     int ler=-1,escrever=-1;
     int i,argc;
     char* argvIn[64];
@@ -39,38 +40,50 @@ void verificaLeituraEscrita(char *argv[]){
         if(strcmp(argv[i], (char*)"=>") == 0) escrever = i;
     }
 
-    if( ler != -1){
+    if( ler != -1)
         splitVetor(argv,ler,argvIn,argvOut);
-     }
+    if( escrever != -1)
+        splitVetor(argv,escrever,argvIn,argvOut);
+
 //
-//    int fileOpen;
+    int fileOpen;
 //
-//    fileOpen = open(argv[1],O_RDONLY);
-//    /* Open File For Standard Input */
-//    if( ( fileOpen ) == 0 ){
-//        printf( "Cannot Open File ") ;
-//        exit(1) ;
-//    }
-//
-//    if( fileOpen != 0 ){
-//        dup2(fileOpen, 0); /* Make fp stdin */
-//        close(fileOpen) ; /* Close original fp */
-//    }
-//
-//
-//    if ( pipe(pp) < 0 ) exit(1);
-//    if ( ( pid = fork() ) < 0 ) exit(1);
-//    if (pid == 0) {     /* filho */
-//       close(pp[0]);    /* fecha saída do pipe (só vai escrever) */
-//       dup2(pp[1], 1);  /* associa entrada do pipe com saída padrão */
-//       close(pp[1]);    /* fecha pp[1], pois se tornou redundante */
-//       execvp(argvIn[0],argvIn); //ls - Escreve | Envia
-//    } else {            /* pai */
-//       close( pp[1] );  /* fecha entrada do pipe (só vai ler) */
-//       dup2(pp[0], 0);  /* associa saída do pipe com entrada padrão */
-//       close(pp[0]);    /* fecha pp[0], pois se tornou redundante */
-//       execvp(argvOut[0],argvOut); //wc - Le | Recebe
-//    }
+    fileOpen = open(argvOut[0],O_RDONLY);
+    /* Open File For Standard Input */
+    if( ( fileOpen ) == 0 ){
+        printf( "Cannot Open File ") ;
+        exit(1) ;
+    }
+
+    if( fileOpen != 0 ){
+        dup2(fileOpen, 0); /* Make fp stdin */
+        close(fileOpen) ; /* Close original fp */
+    }
+
+    if ( pipe(pp) < 0 ) exit(1);
+    if ( ( pid = fork() ) < 0 ) exit(1);
+    if (pid == 0) {    /* Child reads from pipe */
+       close(pp[1]);          /* Close unused write end */
+
+       read(pp[0], &buf, 512);
+
+        execvp(argvIn[0],buf);
+       close(pp[0]);
+       _exit(EXIT_SUCCESS);
+
+    } else {            /* Parent writes argv[1] to pipe */
+       close(pp[0]);          /* Close unused read end */
+
+       fgets(argumentos,512,stdin);
+       //printf("%s",argumentos);
+       write(pp[1], &argumentos, 512);
+
+       close(pp[1]);          /* Reader will see EOF */
+
+       wait();                /* Wait for child */
+
+    }
+
 }
 
 void executaProcesso(char *argv[]){
