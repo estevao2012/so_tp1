@@ -27,32 +27,14 @@ void fazLeitura(char* argvIn[],char* argvOut[]){
     int pp[2];
     int pid;
     char argumentos[512];
-    FILE* fileOpen;
+    int fileOpen;
 
-    if ( pipe(pp) < 0 ) exit(1);
-    if ( ( pid = fork() ) < 0 ) exit(1);
-
-    if (pid == 0) {    /* Child reads from pipe */
-       close(pp[1]);          /* Close unused write end */
-       dup2(pp[0],STDIN_FILENO);
-       close(pp[0]);
-       execvp(argvIn[0],argvIn);
-       _exit(EXIT_SUCCESS);
-    } else {            /* Parent writes argv[1] to pipe */
-       close(pp[0]);   /* Close unused read end */
-       fileOpen = fopen(argvOut[0],"r");
-        while(fscanf(fileOpen,"%s",argumentos) != EOF){
-            if(write(pp[1], &argumentos, strlen(argumentos)) < 1){
-                perror("write");
-                exit(EXIT_FAILURE);
-            }
-            write(pp[1]," ",1);
-        }
-        write(pp[1],"\n",1);
-       fclose(fileOpen);
-       close(pp[1]);          /* Reader will see EOF */
-       wait(NULL);                /* Wait for child */
-    }
+    fileOpen = open(argvOut[0],O_RDONLY);
+       
+    dup2(fileOpen,0); 
+    
+    close(fileOpen);
+    execvp(argvIn[0],argvIn);
 }
 
 void fazEscrita(char* argvIn[],char* argvOut[]){
@@ -65,6 +47,7 @@ void fazEscrita(char* argvIn[],char* argvOut[]){
        
     dup2(fileOpen,1); 
        
+    close(fileOpen);
     execvp(argvIn[0],argvIn);
     _exit(EXIT_SUCCESS);
 
@@ -73,7 +56,7 @@ void fazEscrita(char* argvIn[],char* argvOut[]){
 int verificaLeituraEscrita(char *argv[]){
 
     int ler=-1,escrever=-1;
-    int i,argc;
+    int i,argc,pos;
     char* argvIn[64];
     char* argvOut[64];
 
@@ -84,13 +67,16 @@ int verificaLeituraEscrita(char *argv[]){
         if(strcmp(argv[i], (char*)"=>") == 0) escrever = i;
     }
 
+    if(ler != -1 ) pos = ler;
+    else pos = escrever;
+
+    splitVetor(argv,pos,argvIn,argvOut);
+
     if( ler != -1){
-        splitVetor(argv,ler,argvIn,argvOut);
         fazLeitura(argvIn,argvOut);
         return 1;
     }
     if( escrever != -1){
-        splitVetor(argv,escrever,argvIn,argvOut);
         fazEscrita(argvIn,argvOut);
         return 1;
     }
