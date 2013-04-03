@@ -27,41 +27,47 @@ void fazLeitura(char* argvIn[],char* argvOut[]){
     int pp[2];
     int pid;
     char argumentos[512];
-
     FILE* fileOpen;
 
     if ( pipe(pp) < 0 ) exit(1);
-
     if ( ( pid = fork() ) < 0 ) exit(1);
 
     if (pid == 0) {    /* Child reads from pipe */
        close(pp[1]);          /* Close unused write end */
-
        dup2(pp[0],STDIN_FILENO);
-
        close(pp[0]);
-
        execvp(argvIn[0],argvIn);
        _exit(EXIT_SUCCESS);
-
     } else {            /* Parent writes argv[1] to pipe */
        close(pp[0]);   /* Close unused read end */
        fileOpen = fopen(argvOut[0],"r");
-
         while(fscanf(fileOpen,"%s",argumentos) != EOF){
             if(write(pp[1], &argumentos, strlen(argumentos)) < 1){
                 perror("write");
                 exit(EXIT_FAILURE);
             }
+            write(pp[1]," ",1);
         }
         write(pp[1],"\n",1);
-
        fclose(fileOpen);
-
        close(pp[1]);          /* Reader will see EOF */
        wait(NULL);                /* Wait for child */
-
     }
+}
+
+void fazEscrita(char* argvIn[],char* argvOut[]){
+
+    int pp[2];
+    int pid;
+    char argumentos[512];
+    int fileOpen;
+    fileOpen = open(argvOut[0],O_WRONLY | O_CREAT , 0644);
+       
+    dup2(fileOpen,1); 
+       
+    execvp(argvIn[0],argvIn);
+    _exit(EXIT_SUCCESS);
+
 }
 
 int verificaLeituraEscrita(char *argv[]){
@@ -85,6 +91,7 @@ int verificaLeituraEscrita(char *argv[]){
     }
     if( escrever != -1){
         splitVetor(argv,escrever,argvIn,argvOut);
+        fazEscrita(argvIn,argvOut);
         return 1;
     }
 
@@ -101,8 +108,10 @@ void executaProcesso(char *argv[]){
 
    if ( ( pid = fork() ) < 0 ) exit(1);
    if (pid == 0) {
-     if(verificaLeituraEscrita(argv) == 0)
-          execvp(argv[0],argv);
+        if(verificaLeituraEscrita(argv) == 0){
+            execvp(argv[0],argv);
+        }
+
      _exit(1);
    } else {            /* pai */
       wait();
