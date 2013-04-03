@@ -5,7 +5,7 @@ compila:
 	gcc main.c -o bashso 
  
 executa:
-	./bashso com
+	./bashso
 
 valgrind:
 	@echo "Executando o valgrind"
