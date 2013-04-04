@@ -6,7 +6,7 @@ int countWords(char *argv[]){
     return i;
 }
 
-void splitVetor(char *argv[] , int posSplit , char *argvIn[] ,char *argvOut[]){
+void splitVetor(char *argv[] , int posSplit ,  char *argvIn[] ,char *argvOut[]){
 
     int i,argc;
 
@@ -16,9 +16,23 @@ void splitVetor(char *argv[] , int posSplit , char *argvIn[] ,char *argvOut[]){
         argvIn[i] = argv[i];
     argvIn[i] = NULL;
 
-    for( i = 0 ; i < (argc-(posSplit+1)) ; i++)
+    for( i = 0 ; i < (argc-(posSplit+1)) ; i++){
+        if(strcmp(argv[i+(posSplit+1)],(char*)"|") == 0) break;
         argvOut[i] = argv[i+(posSplit+1)];
+    }    
     argvOut[i] = NULL;
+
+}
+
+void restoVetor(char *argv[] , int posSplit ,  char *argvIn[]){
+
+    int i,argc;
+
+    argc = countWords(argv);
+
+    for(i=posSplit;i<argc;i++)
+        argvIn[i] = argv[i];
+    argvIn[i] = NULL;
 
 }
 
@@ -30,7 +44,7 @@ int fazLeitura(char* argvIn[],char* argvOut[]){
     int fileOpen;
 
     if((fileOpen = open(argvOut[0],O_RDONLY)) != -1){
-        dup2(fileOpen,0); 
+        dup2(fileOpen,0);
         close(fileOpen);
         execvp(argvIn[0],argvIn);
         _exit(EXIT_SUCCESS);
@@ -48,7 +62,7 @@ int fazEscrita(char* argvIn[],char* argvOut[]){
     int fileOpen;
 
     if((fileOpen = open(argvOut[0],O_WRONLY | O_CREAT , 0644)) != -1){
-        dup2(fileOpen,1); 
+        dup2(fileOpen,1);
         close(fileOpen);
         execvp(argvIn[0],argvIn);
         _exit(EXIT_SUCCESS);
@@ -71,11 +85,11 @@ void localizaRedirecionamentos(char *argv[],int* posLeitura, int* posEscrita){
 
 int verificaLeituraEscrita(char *argv[]){
 
-    int ler=-1,escrever=-1; 
+    int ler=-1,escrever=-1;
     char* argvIn[64];
     char* argvOut[64];
 
-    localizaRedirecionamentos(argv,&ler,&escrever); 
+    localizaRedirecionamentos(argv,&ler,&escrever);
 
     if( ler != -1){
         splitVetor(argv,ler,argvIn,argvOut);
@@ -101,40 +115,88 @@ void executaProcesso(char *argv[]){
    if (pid == 0) {
         if(verificaLeituraEscrita(argv) == 0)
             execvp(argv[0],argv);
-        
         _exit(1);
    } else {            /* pai */
       wait();
    }
 }
 
-void executaProcessoComPipe(char *argvIn[] ,char *argvOut[]){
+void executaProcessoComPipe(char *argv[],int qnt){
+    
     int pp[2];
     int pid;
 
-    if ( pipe(pp) < 0 ) exit(1);
+    int posPipe;
+    char *argvIn[64];
+    char *argvOut[64];
+    char *resto[64];
+        
+    if(qnt > 0){
+        posPipe = encontraPipe(argv,0); 
+        splitVetor(argv,posPipe,argvIn,argvOut);    
+        restoVetor(argv,posPipe,resto);
+        argv = resto;
 
-    if ( ( pid = fork() ) < 0 ) exit(1);
+        if ( pipe(pp) < 0 ) exit(1);
+        if ( ( pid = fork() ) < 0 ) exit(1);
+        if (pid == 0) {     
+   
+            dup2(pp[1], 1); 
+            dup2(pp[0], 0); 
+            close(pp[0]);
+            close(pp[1]);   
 
-    if (pid == 0) {     /* filho */
-        close(pp[0]);    /* fecha saída do pipe (só vai escrever) */
-        dup2(pp[1], 1);  /* associa entrada do pipe com saída padrão */
-        close(pp[1]);    /* fecha pp[1], pois se tornou redundante */
-
-        if(verificaLeituraEscrita(argvIn) == 0)
+            //if(verificaLeituraEscrita(argvIn) == 0)
+            executaProcessoComPipe(resto,qnt);
             execvp(argvIn[0],argvIn); //ls - Escreve | Envia
+            qnt--;
 
-        _exit(1);
-    } else {            /* pai */
-        close( pp[1] );  /* fecha entrada do pipe (só vai ler) */
-        dup2(pp[0], 0);  /* associa saída do pipe com entrada padrão */
-        close(pp[0]);    /* fecha pp[0], pois se tornou redundante */
-
-        if(verificaLeituraEscrita(argvOut) == 0)
+            _exit(1);
+        } else {            
+            close( pp[1] ); 
+            dup2(pp[0], 0); 
+            close(pp[0]);   
+            //if(verificaLeituraEscrita(argvOut) == 0)
+            wait();
             execvp(argvOut[0],argvOut); //wc - Le | Recebe
 
-    }
+        }
+    }else execvp(argv[0],argv);
+
 }
+
+
+//Retorna a primeira posicao do pipe
+int encontraPipe(char* argv[] ,int begin){
+
+    int i,argc;
+    argc = countWords(argv);
+    for(i=begin;i<argc;i++)
+        if(strcmp(argv[i], (char*)"|") == 0)
+            return i;
+    return 0;
+}
+
+int quantidadePipes(char* argv[]){
+
+    int i ;
+    int argc;
+    int qntPipes=0;
+
+    argc = countWords(argv);
+
+    for(i=0;i<argc;i++)
+        if(strcmp(argv[i], (char*)"|") == 0)
+            qntPipes++;
+
+    if(qntPipes != -1)
+       return qntPipes;
+
+    return 0;
+}
+
+
+
 
 char** parseCommands(char* comando){
 
@@ -169,21 +231,3 @@ char** parseCommands(char* comando){
 
 }
 
-int validaPipe(char* argv[], char** argvIn , char** argvOut){
-
-    int i ,j=-1, marca_pipe = -1;
-    int qntIn=0,qntOut=0;
-    int argc;
-
-    argc = countWords(argv);
-
-    for(i=0;i<argc;i++)
-        if(strcmp(argv[i], (char*)"|") == 0)
-            marca_pipe = i;
-
-    if(marca_pipe != -1){
-        splitVetor(argv,marca_pipe,argvIn,argvOut);
-        return 1;
-    }
-    return 0;
-}

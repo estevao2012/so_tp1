@@ -15,7 +15,7 @@ int main(int argc , char* argv[])
     int pp[2];
     int pid;
     int i;
-    int opcao;
+    int qntPipes;
     char* argvIn[64];
     char* argvOut[64];
     char* prompt = "Quais são suas ordens ? ";
@@ -42,11 +42,11 @@ int main(int argc , char* argv[])
         strtok(argumentos,"\n");
         args = parseCommands(argumentos);
 
-        opcao = validaPipe(args,argvIn,argvOut);
+        qntPipes = quantidadePipes(args);
 
-        if( opcao == 1 ){
+        if( qntPipes >= 1 ){
             if ((pid=fork()) < 0) exit(1);
-            if (pid == 0) executaProcessoComPipe(argvIn,argvOut); // Como o processo precisa ser fechado , é necessario abrir um novo processo para ele não finalizar o bash
+            if (pid == 0) executaProcessoComPipe(args,qntPipes); // Como o processo precisa ser fechado , é necessario abrir um novo processo para ele não finalizar o bash
             else wait();
         }
         else
