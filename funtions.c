@@ -6,6 +6,7 @@ int countWords(char *argv[]){
     return i;
 }
 
+
 void splitVetor(char *argv[] , int posSplit ,  char *argvIn[] ,char *argvResto[]){
 
     int i,j,argc;
@@ -16,13 +17,12 @@ void splitVetor(char *argv[] , int posSplit ,  char *argvIn[] ,char *argvResto[]
         argvIn[i] = argv[i];
     argvIn[i] = NULL;
 
-    for(j=0,i++; i < argc; i++,j++){
-        //if(strcmp(argv[i],(char*)"|") == 0) break;
+    for(j=0,i++; i < argc; i++,j++){ 
         argvResto[j] = argv[i];
     }    
     argvResto[j] = NULL;
-
 }
+
 
 int fazLeitura(char* argvIn[],char* argvOut[]){
 
@@ -108,7 +108,7 @@ void executaProcesso(char *argv[]){
       wait();
    }
 }
-
+ 
 void processoCom2Pipes(char *argv[],int qntPipes){
 
     int i;
@@ -180,7 +180,7 @@ void processoCom2Pipes(char *argv[],int qntPipes){
     close(pipes[3]);
     for(i=0;i<3;i++)wait();
 }
-
+ 
 //Retorna a primeira posicao do pipe
 int encontraPipe(char* argv[] ,int begin){
 

@@ -41,7 +41,7 @@ int main(int argc , char* argv[])
 
         strtok(argumentos,"\n");
         args = parseCommands(argumentos);
-
+ 
         qntPipes = quantidadePipes(args); 
 
         if( qntPipes >= 1 ){
