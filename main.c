@@ -8,16 +8,10 @@
 
 int main(int argc , char* argv[])
 {
-    char* fim = "fim";
-    char* vazio = "";
+    char* fim = "fim"; 
     char** args;
-    char argumentos[512];
-    int pp[2];
-    int pid;
-    int i;
-    int qntPipes;
-    char* argvIn[64];
-    char* argvOut[64];
+    char argumentos[512];  
+    int qntPipes; 
     char* prompt = "Quais são suas ordens ? ";
 
     int fileOpen;
@@ -45,9 +39,14 @@ int main(int argc , char* argv[])
         qntPipes = quantidadePipes(args); 
 
         if( qntPipes >= 1 ){
-            if ((pid=fork()) < 0) exit(1);
-            if (pid == 0) processoCom2Pipes(args,qntPipes); // Como o processo precisa ser fechado , é necessario abrir um novo processo para ele não finalizar o bash
-            else wait();
+            if(qntPipes == 1){
+                if (fork() == 0){  
+                    processoCom2Pipes(args,qntPipes);
+                }else
+                    wait();
+            }
+            else 
+                processoCom2Pipes(args,qntPipes); // Como o processo precisa ser fechado , é necessario abrir um novo processo para ele não finalizar o bash
         }
         else
           executaProcesso(args);

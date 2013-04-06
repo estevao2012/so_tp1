@@ -104,9 +104,7 @@ void executaProcesso(char *argv[]){
         if(verificaLeituraEscrita(argv) == 0)
             execvp(argv[0],argv);
         _exit(1);
-   } else {            /* pai */
-      wait();
-   }
+   } 
 }
 
 void fechaPipes(int *pipes){
@@ -115,51 +113,51 @@ void fechaPipes(int *pipes){
 }
 
 void inserePrimeiroProcesso(int *pipes,char **args,int qntPipes){
-    int i;
     dup2(pipes[1], 1);
     fechaPipes(pipes);
-    execvp(args[0], args); 
+    if(verificaLeituraEscrita(args) == 0)
+    execvp(args[0], args);     
 }
 void inserePipe(int *pipes,char *args[64][64],char **argv,int qntPipes, int portaEntrada, int portaSaida,int indiceAtual){
-    int i;
-
+    
     if( indiceAtual == (qntPipes-1) ){ 
         if (fork() == 0){  
-            printf("OI%s\n", args[indiceAtual][0]);
+            
             dup2(pipes[portaEntrada], 0);
             dup2(pipes[portaSaida], 1);
             fechaPipes(pipes);
-            execvp(args[indiceAtual][0], args[indiceAtual]); 
-            _exit(EXIT_SUCCESS);
+            if(verificaLeituraEscrita(args[indiceAtual]) == 0)
+                execvp(args[indiceAtual][0], args[indiceAtual]); 
+            
         }else{
-            wait();
             if (fork() == 0){ 
-                printf("LA %s\n", argv[0]);
                 dup2(pipes[portaEntrada+2], 0);
                 fechaPipes(pipes);
-                execvp(argv[0], argv); 
-                _exit(EXIT_SUCCESS);
-            }else
-                exit(EXIT_SUCCESS);           
+                if(verificaLeituraEscrita(argv) == 0)
+                    execvp(argv[0], argv); 
+            }
+            
         }
+    }else{
+        if (fork() == 0){  
+            
+           dup2(pipes[portaEntrada], 0);
+           dup2(pipes[portaSaida], 1);
+           fechaPipes(pipes);
+           if(verificaLeituraEscrita(args[indiceAtual]) == 0)
+               execvp(args[indiceAtual][0], args[indiceAtual]);  
+        }else{ 
+           inserePipe(pipes,args,argv,qntPipes,portaEntrada+2,portaSaida+2,indiceAtual+1);
+        }
+        
+    
     }
-    // else{
-    //     if (fork() == 0){  
-    //         printf("%s\n", args[indiceAtual][0]);
-    //         dup2(pipes[portaEntrada], 0);
-    //         dup2(pipes[portaSaida], 1);
-    //         fechaPipes(pipes);
-    //         execvp(args[indiceAtual][0], args[indiceAtual]); 
-    //     }else{ 
-    //        inserePipe(pipes,args,argv,qntPipes,portaEntrada+2,portaSaida+2,indiceAtual+1);
-    //     }
-    //     //inserePipe(pipes,args,argv,qntPipes,portaEntrada+2,portaSaida+2,indiceAtual+1);
-    // }
+      
 }
 
 void processoCom2Pipes(char *argv[],int qntPipes){
 
-    int i;
+    int i,status;
     int pipes[qntPipes*2];
 
     for( i = 0 ; i <= qntPipes ; i+=2 ) pipe(pipes + i); 
@@ -174,19 +172,24 @@ void processoCom2Pipes(char *argv[],int qntPipes){
 
     if (fork() == 0){  
         inserePrimeiroProcesso(pipes,args[0],qntPipes);
-        _exit(EXIT_SUCCESS);
     }else{ 
-        wait(); 
-        inserePipe(pipes,args,argv,qntPipes,0,3,1);
-        exit(EXIT_SUCCESS);
+        if(qntPipes > 1)inserePipe(pipes,args,argv,qntPipes,0,3,1);
+        else{
+            close(pipes[1]);
+            dup2(pipes[0], 0);
+            close(pipes[0]);
+            if(verificaLeituraEscrita(argv) == 0)
+                execvp(argv[0], argv); 
+        }
     }
     
- 
     fechaPipes(pipes);
     
-    // for(i=0;i<5;i++)
-    //     wait();
-    
+    qntPipes++;
+    for(i=0;i<qntPipes;i++){
+        wait(NULL);        
+    }
+
 }
  
 //Retorna a primeira posicao do pipe
