@@ -149,6 +149,9 @@ void processoCom2Pipes(char *argv[],int qntPipes){
     int portaEntrada,portaSaida;
     int posPipe;
     char *args[64][64];
+    pid_t pid[3];
+    int n;
+
     portaEntrada = 0;
     portaSaida = 3;
 
@@ -159,7 +162,8 @@ void processoCom2Pipes(char *argv[],int qntPipes){
         splitVetor(argv,posPipe,args[i],argv);
     }
 
-    if (fork() == 0){  
+    pid[0] = fork();
+    if (pid[0] == 0){  
         dup2(pipes[1], 1);
         for(i=0;i < qntPipes*2 ;i++)close(pipes[i]);
         //if(verificaLeituraEscrita(args[0]) == 0)
@@ -168,9 +172,10 @@ void processoCom2Pipes(char *argv[],int qntPipes){
     }
 
     // for(i = 1 ; i < qntPipes ; i++){
-    if (fork() == 0){  
-        dup2(pipes[portaEntrada], 0);
-        dup2(pipes[portaSaida], 1);
+    pid[1] = fork();
+    if (pid[1] == 0){  
+        dup2(pipes[0], 0);
+        dup2(pipes[3], 1);
         for(i=0;i < qntPipes*2 ;i++)close(pipes[i]);
         // if(verificaLeituraEscrita(args[i]) == 0)
            execvp(args[i][0], args[i]); 
@@ -179,9 +184,9 @@ void processoCom2Pipes(char *argv[],int qntPipes){
         portaEntrada+=2;
         portaSaida+=2;
     // } 
-
-    if(fork() == 0){ 
-        dup2(pipes[portaEntrada], 0);
+    pid[2] =fork(); 
+    if( pid[2] == 0){ 
+        dup2(pipes[2], 0);
         for(i=0;i < qntPipes*2 ;i++)close(pipes[i]);
         //if(verificaLeituraEscrita(argv) == 0)
             execvp(argv[0], argv);
@@ -192,9 +197,10 @@ void processoCom2Pipes(char *argv[],int qntPipes){
     for(i=0;i < qntPipes*2 ;i++)close(pipes[i]);
     
     qntPipes++;
-    for(i=0;i<qntPipes;i++){
-        wait(&status);
-        printf("Child exited with status %d\n", WEXITSTATUS(status));        
+    for(n=0; n<3; n++)
+    {
+            waitpid(pid[n], &status, 0);
+            printf("Child %d exited with status %d\n", n, WEXITSTATUS(status));
     }
 
 }
