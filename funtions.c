@@ -116,42 +116,29 @@ void inserePrimeiroProcesso(int *pipes,char **args,int qntPipes){
     dup2(pipes[1], 1);
     fechaPipes(pipes);
     if(verificaLeituraEscrita(args) == 0)
-    execvp(args[0], args);     
+    execvp(args[0], args);   
+    _exit(EXIT_SUCCESS);  
 }
 void inserePipe(int *pipes,char *args[64][64],char **argv,int qntPipes, int portaEntrada, int portaSaida,int indiceAtual){
     
-    if( indiceAtual == (qntPipes-1) ){ 
-        if (fork() == 0){  
-            
-            dup2(pipes[portaEntrada], 0);
-            dup2(pipes[portaSaida], 1);
-            fechaPipes(pipes);
-            if(verificaLeituraEscrita(args[indiceAtual]) == 0)
-                execvp(args[indiceAtual][0], args[indiceAtual]); 
-            
-        }else{
-            if (fork() == 0){ 
-                dup2(pipes[portaEntrada+2], 0);
-                fechaPipes(pipes);
-                if(verificaLeituraEscrita(argv) == 0)
-                    execvp(argv[0], argv); 
-            }
-            
-        }
-    }else{
-        if (fork() == 0){  
-            
-           dup2(pipes[portaEntrada], 0);
-           dup2(pipes[portaSaida], 1);
-           fechaPipes(pipes);
-           if(verificaLeituraEscrita(args[indiceAtual]) == 0)
-               execvp(args[indiceAtual][0], args[indiceAtual]);  
-        }else{ 
-           inserePipe(pipes,args,argv,qntPipes,portaEntrada+2,portaSaida+2,indiceAtual+1);
-        }
-        
-    
-    }
+   // printf("%d\n", qntPipes );
+    // for(i = 1 ; i < qntPipes ; i++){
+    //     if (fork() == 0){  
+    //         dup2(pipes[portaEntrada], 0);
+    //         dup2(pipes[portaSaida], 1);
+    //         fechaPipes(pipes);
+    //         if(verificaLeituraEscrita(args[i]) == 0)
+    //            execvp(args[i][0], args[i]);  
+    //     }
+    //     portaEntrada+=2;
+    //     portaSaida+=2;
+    // } 
+
+    dup2(pipes[portaEntrada], 0);
+    dup2(pipes[portaSaida], 1);
+    fechaPipes(pipes);
+    if(verificaLeituraEscrita(args[indiceAtual]) == 0)
+       execvp(args[indiceAtual][0], args[indiceAtual]);  
       
 }
 
@@ -159,35 +146,55 @@ void processoCom2Pipes(char *argv[],int qntPipes){
 
     int i,status;
     int pipes[qntPipes*2];
+    int portaEntrada,portaSaida;
+    int posPipe;
+    char *args[64][64];
+    portaEntrada = 0;
+    portaSaida = 3;
 
     for( i = 0 ; i <= qntPipes ; i+=2 ) pipe(pipes + i); 
 
-    int posPipe;
-    char *args[64][64];
-    
     for( i = 0 ; i < qntPipes ; i++ ){
         posPipe = encontraPipe(argv,0);  
         splitVetor(argv,posPipe,args[i],argv);
     }
 
     if (fork() == 0){  
-        inserePrimeiroProcesso(pipes,args[0],qntPipes);
-    }else{ 
-        if(qntPipes > 1)inserePipe(pipes,args,argv,qntPipes,0,3,1);
-        else{
-            close(pipes[1]);
-            dup2(pipes[0], 0);
-            close(pipes[0]);
-            if(verificaLeituraEscrita(argv) == 0)
-                execvp(argv[0], argv); 
-        }
+        dup2(pipes[1], 1);
+        for(i=0;i < qntPipes*2 ;i++)close(pipes[i]);
+        //if(verificaLeituraEscrita(args[0]) == 0)
+        execvp(args[0][0], args[0]);   
+        _exit(EXIT_SUCCESS); 
+    }
+
+    // for(i = 1 ; i < qntPipes ; i++){
+    if (fork() == 0){  
+        dup2(pipes[portaEntrada], 0);
+        dup2(pipes[portaSaida], 1);
+        for(i=0;i < qntPipes*2 ;i++)close(pipes[i]);
+        // if(verificaLeituraEscrita(args[i]) == 0)
+           execvp(args[i][0], args[i]); 
+        _exit(EXIT_SUCCESS);  
+    }
+        portaEntrada+=2;
+        portaSaida+=2;
+    // } 
+
+    if(fork() == 0){ 
+        dup2(pipes[portaEntrada], 0);
+        for(i=0;i < qntPipes*2 ;i++)close(pipes[i]);
+        //if(verificaLeituraEscrita(argv) == 0)
+            execvp(argv[0], argv);
+        _exit(EXIT_SUCCESS);
     }
     
-    fechaPipes(pipes);
+    
+    for(i=0;i < qntPipes*2 ;i++)close(pipes[i]);
     
     qntPipes++;
     for(i=0;i<qntPipes;i++){
-        wait(NULL);        
+        wait(&status);
+        printf("Child exited with status %d\n", WEXITSTATUS(status));        
     }
 
 }
