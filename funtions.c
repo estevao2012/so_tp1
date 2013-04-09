@@ -24,36 +24,69 @@ void splitVetor(char *argv[] , int posSplit ,  char *argvIn[] ,char *argvResto[]
 }
 
 
-int fazLeitura(char* argvIn[],char* argvOut[]){
+void fazLeitura(char* argvIn[],char* argvOut[]){
 
     int pp[2];
-    int pid;
-    char argumentos[512];
+    char argumentos[512],*buf;
     int fileOpen;
 
     if((fileOpen = open(argvOut[0],O_RDONLY)) != -1){
-        dup2(fileOpen,0);
-        close(fileOpen);
-        execvp(argvIn[0],argvIn);
-        _exit(EXIT_SUCCESS);
+        pipe(pp);
+        if(fork()==0){
+            
+            close(pp[1]); 
+            dup2(pp[0],STDIN_FILENO);
+            close(pp[0]);   
+            
+            execvp(argvIn[0],argvIn);
+            
+            _exit(EXIT_SUCCESS);
+        }else{               
+            
+            close(pp[0]);   
+            dup2(fileOpen,STDIN_FILENO);
+            dup2(pp[1],STDOUT_FILENO);   
+            close(pp[1]);
+            close(fileOpen);
+            
+            while(read(STDIN_FILENO,&buf,1)>0)
+                write(STDOUT_FILENO,&buf,1);
+
+            wait(NULL);
+            
+            exit(EXIT_SUCCESS);
+        }
     }else{
         perror("errno");
-        _exit(1);
+        _exit(EXIT_FAILURE);
     }
 }
 
-int fazEscrita(char* argvIn[],char* argvOut[]){
+void fazEscrita(char* argvIn[],char* argvOut[]){
 
-    int pp[2];
-    int pid;
-    char argumentos[512];
+    int pp[2]; 
+    char argumentos[512],*buf;
     int fileOpen;
-
     if((fileOpen = open(argvOut[0],O_WRONLY | O_CREAT , 0644)) != -1){
-        dup2(fileOpen,1);
-        close(fileOpen);
-        execvp(argvIn[0],argvIn);
-        _exit(EXIT_SUCCESS);
+        pipe(pp);
+        if(fork()==0){
+            close(pp[0]);   
+            dup2(pp[1],1);
+            close(pp[1]); 
+            execvp(argvIn[0],argvIn);
+            _exit(EXIT_SUCCESS);
+        }else{  
+             
+            close(pp[1]);
+            dup2(fileOpen,1);
+            dup2(pp[0],0);
+            close(pp[0]);            
+            while(read(STDIN_FILENO,&buf,1)>0)
+                write(STDOUT_FILENO,&buf,1);
+            wait(NULL);
+            exit(EXIT_SUCCESS);
+ 
+        }
     }else{
         perror("errno");
         _exit(1);

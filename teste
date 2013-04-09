@@ -1,0 +1,18 @@
+total 96
+-rwxrwxr-x 1 dcc605 dcc605 12503 Apr  8 23:44 bashso
+drwxrwxr-x 3 dcc605 dcc605  4096 Apr  8 21:52 bin
+-rw-rw-r-- 1 dcc605 dcc605    15 Apr  8 21:52 com
+-rw-rw-r-- 1 dcc605 dcc605   119 Apr  8 21:52 com_ls
+-rw-rw-r-- 1 dcc605 dcc605  5819 Apr  8 23:44 funtions.c
+-rw-rw-r-- 1 dcc605 dcc605  5812 Apr  8 22:20 funtions.c~
+-rw-rw-r-- 1 dcc605 dcc605  1406 Apr  8 23:11 main.c
+-rw-rw-r-- 1 dcc605 dcc605  6764 Apr  8 23:44 main.o
+-rw-rw-r-- 1 dcc605 dcc605   157 Apr  8 21:52 Makefile
+-rw-rw-r-- 1 dcc605 dcc605   151 Apr  8 21:52 Makefile~
+drwxrwxr-x 3 dcc605 dcc605  4096 Apr  8 21:52 obj
+-rw-rw-r-- 1 dcc605 dcc605    24 Apr  8 21:52 README.md
+-rw-r--r-- 1 dcc605 dcc605   132 Apr  8 23:44 teste
+-rw-rw-r-- 1 dcc605 dcc605  1048 Apr  8 21:52 tp0.cbp
+-rw-rw-r-- 1 dcc605 dcc605   135 Apr  8 21:52 tp0.depend
+-rw-rw-r-- 1 dcc605 dcc605   239 Apr  8 21:52 tp0.layout
+-rwxrwxr-x 1 dcc605 dcc605  7731 Apr  8 21:52 tp1
