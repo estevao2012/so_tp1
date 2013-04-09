@@ -41,12 +41,12 @@ int main(int argc , char* argv[])
         if( qntPipes >= 1 ){
             if(qntPipes == 1){
                 if (fork() == 0){  
-                    processoCom2Pipes(args,qntPipes);
+                    processoComPipes(args,qntPipes);
                 }else
                     wait();
             }
             else 
-                processoCom2Pipes(args,qntPipes); // Como o processo precisa ser fechado , é necessario abrir um novo processo para ele não finalizar o bash
+                processoComPipes(args,qntPipes); // Como o processo precisa ser fechado , é necessario abrir um novo processo para ele não finalizar o bash
         }
         else
           executaProcesso(args);
