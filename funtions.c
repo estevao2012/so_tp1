@@ -1,3 +1,14 @@
+void removeSimboloBackground(char *argv[] , int posSplit){
+    int i,argc;
+
+    argc = countWords(argv);
+
+    for(i = 0 ; i < posSplit ; i++)
+        argv[i] = argv[i];
+    argv[i] = NULL;
+
+}
+
 int countWords(char *argv[]){
     int i=0;
     while(argv[i]!= NULL){
@@ -27,48 +38,40 @@ void splitVetor(char *argv[] , int posSplit ,  char *argvIn[] ,char *argvResto[]
 void fazLeitura(char* argvIn[],char* argvOut[]){
 
     int pp[2];
-    char argumentos[512],*buf;
+    char *buf;
     int fileOpen;
 
-    //if((fileOpen = open(argvOut[0],O_RDONLY)) != -1){
     pipe(pp);
     if(fork()==0){
-        
         fileOpen = open(argvOut[0],O_RDONLY);
+        if(fileOpen == -1){
+            perror("errno");
+            exit(EXIT_FAILURE);
+        }
 
         close(pp[0]);   
         dup2(fileOpen,STDIN_FILENO);
         dup2(pp[1],STDOUT_FILENO);   
         close(pp[1]);
         close(fileOpen);
-        
+
         while(read(STDIN_FILENO,&buf,1)>0)
             write(STDOUT_FILENO,&buf,1);
-        
-        
         _exit(EXIT_SUCCESS);     
         
     }else{  
-        wait(NULL); 
-
         close(pp[1]);   
         dup2(pp[0],STDIN_FILENO);
-        close(pp[0]); 
-        
+        close(pp[0]);         
         execvp(argvIn[0],argvIn);
-        
         exit(EXIT_SUCCESS);
     }
-    // }else{
-    //     perror("errno");
-    //     exit(EXIT_FAILURE);
-    // }
 }
 
 void fazEscrita(char* argvIn[],char* argvOut[]){
 
     int pp[2]; 
-    char argumentos[512],*buf;
+    char *buf;
     int fileOpen;
     if((fileOpen = open(argvOut[0],O_WRONLY | O_CREAT , 0644)) != -1){
         pipe(pp);
@@ -86,7 +89,6 @@ void fazEscrita(char* argvIn[],char* argvOut[]){
             close(pp[0]);   
             dup2(pp[1],1);
             close(pp[1]); 
-            //wait(NULL);
             execvp(argvIn[0],argvIn);
             exit(EXIT_SUCCESS); 
         }
@@ -95,6 +97,53 @@ void fazEscrita(char* argvIn[],char* argvOut[]){
         _exit(1);
     }
 
+}
+
+
+void LeDepoisfazEscrita(char* argvIn[],char* arquivoIn,char* arquivoOut){
+
+    int pp[2];
+    char *buf;
+    int fileOpen,fileOut;
+
+    pipe(pp);
+    if(fork()==0){
+        
+        fileOpen = open(arquivoIn,O_RDONLY);
+
+        if(fileOpen == -1){
+            perror("errno");
+            exit(EXIT_FAILURE);
+        }
+
+        close(pp[0]);   
+        dup2(fileOpen,STDIN_FILENO);
+        dup2(pp[1],STDOUT_FILENO);   
+        close(pp[1]);
+        close(fileOpen);   
+
+        while(read(STDIN_FILENO,&buf,1)>0)
+            write(STDOUT_FILENO,&buf,1);
+    
+        _exit(EXIT_SUCCESS);            
+        
+    }else{  
+        wait(NULL); 
+        fileOut = open(arquivoOut,O_WRONLY | O_CREAT , 0644);
+        if(fileOut == -1) {
+            perror("errno");
+            exit(EXIT_FAILURE);
+        }
+
+        dup2(pp[0],STDIN_FILENO);
+        dup2(fileOut,1);
+        close(pp[1]);
+        close(pp[0]);
+        close(fileOut);   
+
+        execvp(argvIn[0],argvIn);
+        exit(EXIT_SUCCESS);
+    }
 }
 
 void localizaRedirecionamentos(char *argv[],int* posLeitura, int* posEscrita,int* posBackground){
@@ -112,23 +161,22 @@ int verificaSinal(char *argv[]){
 
     int ler=-1,escrever=-1,background=-1;
     char* argvIn[64];
-    char* argvOut[64];
+    char* argvOut[64]; 
+    int pp[2];
 
     localizaRedirecionamentos(argv,&ler,&escrever,&background);
 
-    if(ler != -1 && escrever != -1){
-        //printf("fazer essa parte\n");
-        if(ler > escrever){
-            printf("escrever primeiro , depois ler\n");
-        }else{
-            printf("ler primeiro , depois escrever\n");
-        }
-    }
-    else if(background!= -1){
-        printf("Fazendo background\n");
-        exit(1);
-    }else{    
+    pipe(pp);
 
+    if(ler != -1 && escrever != -1){
+        if(ler > escrever){
+            splitVetor(argv,escrever,argvIn,argvOut);
+            LeDepoisfazEscrita(argvIn,argvOut[2],argvOut[0]);
+        }else{
+            splitVetor(argv,ler,argvIn,argvOut);
+            LeDepoisfazEscrita(argvIn,argvOut[0],argvOut[2]);
+        }
+    }else{    
         if( ler != -1){
             splitVetor(argv,ler,argvIn,argvOut);
             if(fork() == 0)fazLeitura(argvIn,argvOut);
@@ -142,12 +190,11 @@ int verificaSinal(char *argv[]){
         }
     }
 
-
     if(ler == -1 && escrever == -1)return 0;
     else return 1;
 }
 
-void executaProcesso(char *argv[]){
+void executaUmProcesso(char *argv[]){
 
    int pp[2];
    int pid;
@@ -171,7 +218,7 @@ void fechaPipes(int *pipes){
 }
 
 
-void processoComPipes(char *argv[],int qntPipes){
+void executarComandos(char *argv[],int qntPipes){
 
     int i,j,status;
     int pipes[qntPipes*2];
@@ -182,6 +229,12 @@ void processoComPipes(char *argv[],int qntPipes){
 
     portaEntrada = 0;
     portaSaida = 3;
+
+    if(qntPipes == 0){
+        executaUmProcesso(argv);
+        exit(EXIT_SUCCESS);
+    }
+
 
     for( i = 0 ; i < (qntPipes*2) ; i+=2 ){ pipe(pipes + i); } 
 

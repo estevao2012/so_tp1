@@ -2,19 +2,19 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <signal.h>
 #include <fcntl.h>
 #include "funtions.c"
-
 
 int main(int argc , char* argv[])
 {
     char* fim = "fim"; 
     char** args;
     char argumentos[512];  
-    int qntPipes; 
+    int qntPipes,tmp_entrada,tmp_saida,bg=0; 
     char* prompt = "Quais são suas ordens ? ";
-
-    int fileOpen;
+    pid_t processo,w;
+    int fileOpen,status;
 
     fileOpen = open(argv[1],O_RDONLY);
 
@@ -31,34 +31,47 @@ int main(int argc , char* argv[])
 
     //Valida o que for escrito pelo usuario
     printf("%s",prompt);
+
     while(fgets(argumentos,512,stdin) != NULL){
 
         strtok(argumentos,"\n");
+
         args = parseCommands(argumentos);
- 
+
+        localizaRedirecionamentos(args,&tmp_entrada,&tmp_saida,&bg);
+        if(bg != 0){
+            removeSimboloBackground(args,bg);
+        }
         qntPipes = quantidadePipes(args); 
 
-        if( qntPipes >= 1 ){
-            if(qntPipes == 1){
-                if (fork() == 0)  
-                    processoComPipes(args,qntPipes);
-                else
-                    wait(NULL);
-            }
-            else 
-                processoComPipes(args,qntPipes); // Como o processo precisa ser fechado , é necessario abrir um novo processo para ele não finalizar o bash
-                
-        }
-        else{
-            if(fork() == 0){
-                executaProcesso(args);
-            }
-            else{
-              wait(NULL);  
-            } 
-        }
+        processo = fork();
+        if (processo == 0){
+            if(bg != 0)printf("Child PID is %ld\n", (long) getpid());
+            executarComandos(args,qntPipes);
+        }else{
+            if(bg != 0){
+                do {
+                    w = waitpid(processo, &status, WUNTRACED | WCONTINUED);
+                    if (w == -1) {
+                        perror("waitpid");
+                        exit(EXIT_FAILURE);
+                    }
 
-        if(strcmp(argumentos,fim) == 0) break;
+                    if (WIFEXITED(status)) {
+                        printf("Concluido status=%d\n", WEXITSTATUS(status));
+                    } else if (WIFSIGNALED(status)) {
+                        printf("killed by signal %d\n", WTERMSIG(status));
+                    } else if (WIFSTOPPED(status)) {
+                        printf("stopped by signal %d\n", WSTOPSIG(status));
+                    } else if (WIFCONTINUED(status)) {
+                        printf("continued\n");
+                    }
+                } while (!WIFEXITED(status) && !WIFSIGNALED(status));
+            }else wait(NULL);
+        }            
+        
+
+        if(strcmp(argumentos,fim) == 0) exit(EXIT_SUCCESS);
         printf("%s",prompt);
 
     }
