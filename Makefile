@@ -2,10 +2,10 @@ all: compila executa
 
 compila:
 	gcc -c main.c -Wall
-	gcc main.c -o bashso 
+	gcc main.c -o shellso 
  
 executa:
-	./bashso
+	./shellso
 
 valgrind:
 	@echo "Executando o valgrind"

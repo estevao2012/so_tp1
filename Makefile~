@@ -1,7 +1,7 @@
 all: compila executa
 
 compila:
-	gcc -c main.c
+	gcc -c main.c -Wall
 	gcc main.c -o bashso 
  
 executa:
