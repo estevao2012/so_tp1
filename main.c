@@ -40,16 +40,23 @@ int main(int argc , char* argv[])
 
         if( qntPipes >= 1 ){
             if(qntPipes == 1){
-                if (fork() == 0){  
+                if (fork() == 0)  
                     processoComPipes(args,qntPipes);
-                }else
-                    wait();
+                else
+                    wait(NULL);
             }
             else 
                 processoComPipes(args,qntPipes); // Como o processo precisa ser fechado , é necessario abrir um novo processo para ele não finalizar o bash
+                
         }
-        else
-          executaProcesso(args);
+        else{
+            if(fork() == 0){
+                executaProcesso(args);
+            }
+            else{
+              wait(NULL);  
+            } 
+        }
 
         if(strcmp(argumentos,fim) == 0) break;
         printf("%s",prompt);
