@@ -1,8 +1,0 @@
-# depslib dependency file v1.0
-1364481183 source:/home/dcc605/tp0/main.c
-	<sys/wait.h>
-	<stdio.h>
-	<stdlib.h>
-	<unistd.h>
-	<string.h>
-
