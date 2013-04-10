@@ -117,7 +117,12 @@ int verificaSinal(char *argv[]){
     localizaRedirecionamentos(argv,&ler,&escrever,&background);
 
     if(ler != -1 && escrever != -1){
-        printf("fazer essa parte\n");
+        //printf("fazer essa parte\n");
+        if(ler > escrever){
+            printf("escrever primeiro , depois ler\n");
+        }else{
+            printf("ler primeiro , depois escrever\n");
+        }
     }
     else if(background!= -1){
         printf("Fazendo background\n");
