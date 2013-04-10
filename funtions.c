@@ -219,12 +219,13 @@ void executaUmProcesso(char *argv[]){
 void executarComandos(char *argv[],int qntPipes){
 
     int i,j,status;
-    int pipes[qntPipes*2];
+    int *pipes;
     int portaEntrada,portaSaida;
     int posPipe;
     char *args[64][64]; 
     int n;
 
+    pipes = (int)malloc((qntPipes*2) * sizeof(int) );
     portaEntrada = 0;
     portaSaida = 3;
 
@@ -348,6 +349,5 @@ char** parseCommands(char* comando){
 
     f_words[h] = NULL;
     return f_words;
-
 }
 
