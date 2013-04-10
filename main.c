@@ -46,7 +46,7 @@ int main(int argc , char* argv[])
 
         processo = fork();
         if (processo == 0){
-            if(bg != 0)printf("Child PID is %ld\n", (long) getpid());
+            if(bg != 0)printf("[1] %ld\n", (long) getpid());
             executarComandos(args,qntPipes);
             _exit(EXIT_SUCCESS);
         }else{
