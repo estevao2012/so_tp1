@@ -1,8 +1,5 @@
 void removeSimboloBackground(char *argv[] , int posSplit){
-    int i,argc;
-
-    argc = countWords(argv);
-
+    int i;
     for(i = 0 ; i < posSplit ; i++)
         argv[i] = argv[i];
     argv[i] = NULL;
@@ -210,11 +207,6 @@ void executaUmProcesso(char *argv[]){
         wait(NULL);
         exit(EXIT_SUCCESS);
    }
-}
-
-void fechaPipes(int *pipes){
-    int i;
-    for(i=0;i < sizeof(pipes) ;i++)close(pipes[i]);
 }
 
 
