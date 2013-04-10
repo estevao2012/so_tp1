@@ -48,6 +48,7 @@ int main(int argc , char* argv[])
         if (processo == 0){
             if(bg != 0)printf("Child PID is %ld\n", (long) getpid());
             executarComandos(args,qntPipes);
+            _exit(EXIT_SUCCESS);
         }else{
             if(bg != 0){
                 do {
@@ -67,7 +68,10 @@ int main(int argc , char* argv[])
                         printf("continued\n");
                     }
                 } while (!WIFEXITED(status) && !WIFSIGNALED(status));
-            }else wait(NULL);
+            }else{
+                wait(NULL);
+                //exit(EXIT_SUCCESS);
+            }
         }            
         
 

@@ -91,7 +91,7 @@ void fazEscrita(char* argvIn[],char* argvOut[]){
         }
     }else{
         perror("errno");
-        _exit(1);
+        exit(1);
     }
 
 }
@@ -177,13 +177,19 @@ int verificaSinal(char *argv[]){
         if( ler != -1){
             splitVetor(argv,ler,argvIn,argvOut);
             if(fork() == 0)fazLeitura(argvIn,argvOut);
-            else wait(NULL);
+            else{
+                wait(NULL);
+                exit(EXIT_SUCCESS);
+            }
         }
 
         if( escrever != -1){
             splitVetor(argv,escrever,argvIn,argvOut);
             if(fork() == 0)fazEscrita(argvIn,argvOut);
-            else wait(NULL);
+            else{
+                wait(NULL);
+                exit(EXIT_SUCCESS);
+            }
         }
     }
 
@@ -256,7 +262,7 @@ void executarComandos(char *argv[],int qntPipes){
             if(verificaSinal(args[i]) == 0)
                 execvp(args[j][0], args[j]); 
             
-            _exit(EXIT_SUCCESS);  
+            exit(EXIT_SUCCESS);  
 	    }
     } 
     
